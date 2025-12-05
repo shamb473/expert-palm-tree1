@@ -3,8 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { CropGuide, DailyWeather } from '../types';
 import { 
     Sprout, Droplets, Bug, TrendingUp, Calendar, AlertTriangle, 
-    ClipboardList, Check, Bell, BellRing, Beaker, Tractor, Info, Sun, CloudRain
+    ClipboardList, Check, Bell, BellRing, Beaker, Tractor, Info, Sun, CloudRain, Wind, Thermometer
 } from 'lucide-react';
+
+interface CropAdvisoryProps {
+    weatherData: DailyWeather[];
+}
 
 const CROP_DATA: CropGuide[] = [
     {
@@ -65,10 +69,10 @@ const CROP_DATA: CropGuide[] = [
         ],
         irrigation: [
             'Critical stages: Square formation, Flowering, Boll development.',
-            'Avoid water logging during seedling stage.',
-            'Drip irrigation increases yield by 25-30%.'
+            'Maintain adequate moisture but avoid waterlogging.',
+            'Drip irrigation increases yield by 20-30%.'
         ],
-        yieldEstimate: '8 - 12 Quintals per Acre (with good management)'
+        yieldEstimate: '8 - 12 Quintals/Acre'
     },
     {
         id: 'soybean',
@@ -76,47 +80,50 @@ const CROP_DATA: CropGuide[] = [
         scientificName: 'Glycine max',
         image: 'https://picsum.photos/800/400?random=21',
         preparation: [
-            'One deep ploughing followed by 2-3 harrowings.',
-            'Prepare seed bed with good drainage.',
-            'Seed treatment with Rhizobium and PSB culture is mandatory.'
+            'One deep ploughing followed by two harrowings.',
+            'Prepare seed bed with good drainage to avoid waterlogging.'
         ],
         sowing: {
-            period: 'June 20 - July 10',
-            method: 'Drilling or BBF (Broad Bed Furrow) method',
+            period: 'June 20 - July 10 (On sufficient moisture)',
+            method: 'Broad Bed Furrow (BBF) recommended',
             seedRate: '25-30 kg per Acre'
         },
         fertilizer: [
             {
                 stage: 'Basal Dose',
                 timing: 'At Sowing',
-                activities: ['DAP: 50kg/acre', 'Sulphur: 10kg/acre (Crucial for oil content)']
+                activities: ['DAP: 50kg/acre', 'Sulphur: 10kg/acre']
+            },
+            {
+                stage: 'Flowering Stage',
+                timing: '35-40 Days',
+                activities: ['00:52:34 Foliar Spray (100g/pump)']
             }
         ],
         spraying: [
             {
-                stage: 'Weed Control',
-                timing: '0-3 Days (Pre-emergence)',
-                activities: ['Pendimethalin 30 EC']
+                stage: 'Stem Fly / Girdle Beetle',
+                timing: '15-20 Days',
+                activities: ['Chlorantraniliprole 18.5 SC (3ml/10L)']
             },
             {
-                stage: 'Stem Fly / Girdle Beetle',
-                timing: '20-25 Days',
-                activities: ['Chlorantraniliprole 18.5 SC']
+                stage: 'Defoliators',
+                timing: '40-50 Days',
+                activities: ['Emamectin Benzoate (4g/10L)']
             }
         ],
         diseases: [
             {
                 name: 'Yellow Mosaic Virus',
-                symptoms: 'Yellow irregular patches on leaves.',
-                solution: 'Control Whitefly vector. Remove infected plants. Spray Thiamethoxam.'
+                symptoms: 'Yellow patches on leaves, stunted growth.',
+                solution: 'Control Whitefly vector with Thiamethoxam. Remove infected plants.'
             }
         ],
         irrigation: [
             'Critical stages: Pod initiation and Grain filling.',
-            'Moisture stress at pod filling drastically reduces yield.',
-            'Avoid water stagnation.'
+            'Avoid moisture stress during flowering.'
         ],
-        yieldEstimate: '8 - 10 Quintals per Acre'
+        yieldEstimate: '8 - 10 Quintals/Acre'
     },
     {
         id: 'tur',
@@ -125,425 +132,360 @@ const CROP_DATA: CropGuide[] = [
         image: 'https://picsum.photos/800/400?random=22',
         preparation: [
             'Deep ploughing to break hard pans.',
-            'Often intercropped with Soybean or Cotton.'
+            'Apply compost 2-3 weeks before sowing.'
         ],
         sowing: {
-            period: 'June - July',
-            method: 'Dibbling',
-            seedRate: '4-5 kg per Acre (Sole crop)'
+            period: 'June 15 - July 15',
+            method: 'Intercropping with Soybean/Cotton or Sole Crop',
+            seedRate: '5-6 kg per Acre (Sole crop)'
         },
         fertilizer: [
             {
-                stage: 'Basal',
+                stage: 'Basal Dose',
                 timing: 'At Sowing',
-                activities: ['DAP: 40kg/acre', 'Zinc Sulphate: 5kg/acre']
+                activities: ['DAP: 40kg/acre']
             }
         ],
         spraying: [
             {
-                stage: 'Pod Borer',
-                timing: 'Flowering Stage',
-                activities: ['Indoxacarb 14.5 SC']
+                stage: 'Pod Borer (Helicoverpa)',
+                timing: 'Flowering/Podding',
+                activities: ['Indoxacarb 14.5 SC (10ml/10L)']
             }
         ],
         diseases: [
             {
-                name: 'Wilt (Ukhata)',
-                symptoms: 'Yellowing and drying of leaves, internal vascular browning.',
-                solution: 'Use resistant varieties (BSMR-736). Seed treatment with Trichoderma.'
+                name: 'Wilt (Udhali)',
+                symptoms: 'Sudden drooping of leaves, black streaks on stem.',
+                solution: 'Seed treatment with Trichoderma. Avoid water stagnation.'
             }
         ],
         irrigation: [
-            'Branching, Flowering and Pod filling stages are critical.',
-            'Requires less water but sensitive to water logging.'
+            'One irrigation at branching and one at pod filling increases yield.',
         ],
-        yieldEstimate: '6 - 8 Quintals per Acre'
+        yieldEstimate: '6 - 8 Quintals/Acre'
     },
     {
         id: 'wheat',
-        name: 'Wheat',
+        name: 'Wheat (Gahu)',
         scientificName: 'Triticum',
         image: 'https://picsum.photos/800/400?random=23',
         preparation: [
             'Pre-sowing irrigation (Palewa) is necessary.',
-            '2-3 harrowings to create fine tilth.'
+            'Fine seed bed required.'
         ],
         sowing: {
-            period: 'Nov 1 - Nov 15 (Timely), up to Dec 10 (Late)',
+            period: 'Nov 1 - Nov 15 (Timely sown)',
             method: 'Seed Drill',
             seedRate: '40 kg per Acre'
         },
         fertilizer: [
             {
-                stage: 'Basal',
+                stage: 'Basal Dose',
                 timing: 'At Sowing',
-                activities: ['NPK 12:32:16: 50kg/acre']
+                activities: ['N:P:K 12:32:16 (50kg/acre)']
             },
             {
                 stage: 'Top Dressing',
                 timing: '21 Days (CRI Stage)',
-                activities: ['Urea: 25kg/acre after irrigation']
+                activities: ['Urea: 30kg/acre']
             }
         ],
         spraying: [
             {
-                stage: 'Weed Control',
-                timing: '30-35 Days',
-                activities: ['2,4-D or Metsulfuron']
+                stage: 'Aphids/Termites',
+                timing: 'As required',
+                activities: ['Chlorpyriphos 20 EC']
             }
         ],
         diseases: [
             {
                 name: 'Rust (Tambera)',
-                symptoms: 'Orange/Yellow pustules on leaves.',
-                solution: 'Propiconazole 25 EC spray.'
+                symptoms: 'Brown/Yellow pustules on leaves.',
+                solution: 'Spray Propiconazole 25 EC (1ml/L).'
             }
         ],
         irrigation: [
-            'Requires 4-6 irrigations.',
-            'Most Critical: CRI (21 days), Tillering (40 days), Flowering (60 days).'
+            'Critical: CRI Stage (21 days), Tillering (40-45 days), Flowering (60-65 days).',
         ],
-        yieldEstimate: '15 - 18 Quintals per Acre'
+        yieldEstimate: '15 - 18 Quintals/Acre'
     }
 ];
 
-interface CropAdvisoryProps {
-    weatherData?: DailyWeather[];
-}
-
 export const CropAdvisory: React.FC<CropAdvisoryProps> = ({ weatherData }) => {
-    const [selectedCropId, setSelectedCropId] = useState<string>(CROP_DATA[0].id);
-    const [activeTab, setActiveTab] = useState<string>('prep');
-    const [isSubscribed, setIsSubscribed] = useState(false);
-    const [showToast, setShowToast] = useState(false);
-    const [advisoryAlert, setAdvisoryAlert] = useState<{message: string, type: 'warning' | 'safe' | 'danger' | null}>({ message: '', type: null });
+    const [selectedCropId, setSelectedCropId] = useState<string>('cotton');
+    const [activeTab, setActiveTab] = useState<string>('sowing');
+    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const [weatherAlert, setWeatherAlert] = useState<{type: 'warning' | 'danger' | 'success', message: string} | null>(null);
 
     const selectedCrop = CROP_DATA.find(c => c.id === selectedCropId) || CROP_DATA[0];
-    const currentWeather = weatherData && weatherData.length > 0 ? weatherData[0] : null;
+    const currentWeather = weatherData[0];
 
+    // Weather Analysis Logic
     useEffect(() => {
-        if (!currentWeather) {
-            setAdvisoryAlert({ message: '', type: null });
-            return;
+        if (!currentWeather) return;
+
+        let alert = null;
+
+        if (activeTab === 'spraying') {
+            if (currentWeather.windSpeed > 15) {
+                alert = { type: 'danger', message: `High wind speed (${currentWeather.windSpeed} km/h). Avoid spraying today to prevent drift.` };
+            } else if (currentWeather.rainChance > 40) {
+                alert = { type: 'danger', message: `Rain forecast (${currentWeather.rainChance}%). Spraying might be washed off.` };
+            } else {
+                alert = { type: 'success', message: `Weather is suitable for spraying.` };
+            }
+        } else if (activeTab === 'sowing') {
+            if (currentWeather.rainChance > 70) {
+                alert = { type: 'warning', message: `Heavy rain expected. Delay sowing to avoid seed washout.` };
+            } else if (currentWeather.temp > 40) {
+                alert = { type: 'warning', message: `High temperature (${currentWeather.temp}°C). Ensure soil moisture before sowing.` };
+            } else if (currentWeather.temp < 15) {
+                alert = { type: 'warning', message: `Low temperature (${currentWeather.temp}°C). Germination might be delayed.` };
+            } else {
+                 alert = { type: 'success', message: `Conditions are favorable for sowing.` };
+            }
+        } else if (activeTab === 'diseases') {
+            if (currentWeather.humidity > 80 && currentWeather.temp > 25) {
+                alert = { type: 'danger', message: `High humidity & temp detected. High risk of fungal attacks like Rust or Blight.` };
+            } else if (currentWeather.condition.includes('Cloudy')) {
+                alert = { type: 'warning', message: `Cloudy weather promotes pest attacks (like Bollworm/Caterpillars). Monitor closely.` };
+            }
+        } else if (activeTab === 'irrigation') {
+            if (currentWeather.rainChance > 50) {
+                alert = { type: 'success', message: `Rain expected. You can skip irrigation today to save water.` };
+            } else if (currentWeather.temp > 38) {
+                alert = { type: 'warning', message: `High heat stress. Ensure critical stage irrigation.` };
+            }
         }
 
-        // Analyze weather against selected stage
-        let message = '';
-        let type: 'warning' | 'safe' | 'danger' | null = null;
-
-        switch(activeTab) {
-            case 'spray':
-                if (!currentWeather.isSpraySafe) {
-                    message = `⚠️ Warning: High winds (${currentWeather.windSpeed} km/h) or rain detected. Spraying is NOT recommended today.`;
-                    type = 'danger';
-                } else {
-                    message = `✅ Weather conditions (Wind: ${currentWeather.windSpeed} km/h) are favorable for spraying.`;
-                    type = 'safe';
-                }
-                break;
-            case 'sow':
-                if (currentWeather.rainChance > 60) {
-                     message = `⚠️ Heavy rain forecast (${currentWeather.rainChance}%). Delay sowing to avoid seed wash-off.`;
-                     type = 'warning';
-                } else if (currentWeather.rainChance < 20) {
-                     message = `ℹ️ Low rain chance. Ensure sufficient soil moisture before sowing.`;
-                     type = 'warning';
-                } else {
-                     message = `✅ Good conditions for sowing.`;
-                     type = 'safe';
-                }
-                break;
-            case 'disease':
-                 if (currentWeather.humidity > 80) {
-                      message = `⚠️ High humidity (${currentWeather.humidity}%) significantly increases fungal disease risk. Monitor crop closely.`;
-                      type = 'danger';
-                 } else {
-                      message = `✅ Moderate humidity. Lower risk of fungal spread today.`;
-                      type = 'safe';
-                 }
-                 break;
-            case 'irrig':
-                 if (currentWeather.rainChance > 50) {
-                      message = `🌧️ Rain predicted today. You may skip irrigation to save water.`;
-                      type = 'safe';
-                 }
-                 break;
-            default:
-                 if (currentWeather.rainChance > 70) {
-                      message = `⚠️ Heavy rain alert today. Plan farm activities accordingly.`;
-                      type = 'warning';
-                 }
-                 break;
-        }
-
-        setAdvisoryAlert({ message, type });
+        setWeatherAlert(alert as any);
 
     }, [activeTab, currentWeather, selectedCropId]);
 
-    const toggleSubscription = () => {
-        setIsSubscribed(!isSubscribed);
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-    };
 
-    const tabs = [
-        { id: 'prep', label: 'Preparation', icon: <Tractor size={18} /> },
-        { id: 'sow', label: 'Sowing', icon: <Sprout size={18} /> },
-        { id: 'fert', label: 'Fertilizer', icon: <Beaker size={18} /> },
-        { id: 'spray', label: 'Spraying', icon: <Info size={18} /> },
-        { id: 'disease', label: 'Diseases', icon: <Bug size={18} /> },
-        { id: 'irrig', label: 'Irrigation', icon: <Droplets size={18} /> },
-        { id: 'yield', label: 'Yield', icon: <TrendingUp size={18} /> },
-    ];
-
-    return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
-            
-            {/* Header with Subscription */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-                        <ClipboardList className="text-[#2E7D32]" size={36} />
-                        Crop Advisory
-                    </h2>
-                    <p className="text-slate-600 mt-2">Complete guide from sowing to harvesting for Vidarbha region.</p>
-                </div>
-                
-                <button 
-                    onClick={toggleSubscription}
-                    className={`flex items-center gap-3 px-6 py-3 rounded-xl font-bold transition-all shadow-md ${
-                        isSubscribed 
-                        ? 'bg-green-100 text-green-800 border-2 border-green-500' 
-                        : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
-                    }`}
-                >
-                    {isSubscribed ? <BellRing size={20} className="text-green-600" /> : <Bell size={20} />}
-                    <div className="text-left">
-                        <span className="block text-xs uppercase tracking-wider opacity-70">Weekly Alerts</span>
-                        <span className="text-sm">{isSubscribed ? 'Subscribed' : 'Subscribe Now'}</span>
-                    </div>
-                </button>
-            </div>
-
-            {/* Crop Selector */}
-            <div className="flex overflow-x-auto gap-4 mb-8 pb-4 scrollbar-hide">
-                {CROP_DATA.map(crop => (
-                    <button
-                        key={crop.id}
-                        onClick={() => {
-                            setSelectedCropId(crop.id);
-                            setActiveTab('prep');
-                        }}
-                        className={`flex-shrink-0 flex items-center gap-3 px-6 py-4 rounded-2xl border-2 transition-all min-w-[200px] ${
-                            selectedCropId === crop.id
-                            ? 'border-[#FBC02D] bg-[#2E7D32] text-white shadow-lg transform scale-105'
-                            : 'border-slate-100 bg-white text-slate-600 hover:border-green-200'
-                        }`}
-                    >
-                        <img src={crop.image} alt={crop.name} className="w-12 h-12 rounded-full object-cover border-2 border-white" />
-                        <div className="text-left">
-                            <span className="block font-bold text-lg">{crop.name.split(' ')[0]}</span>
-                            <span className={`text-xs ${selectedCropId === crop.id ? 'text-green-200' : 'text-slate-400'}`}>
-                                {crop.scientificName}
-                            </span>
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'prep':
+                return (
+                    <ul className="space-y-3">
+                        {selectedCrop.preparation.map((step, idx) => (
+                            <li key={idx} className="flex items-start gap-3 bg-slate-50 p-3 rounded-lg">
+                                <Tractor className="text-orange-600 mt-1 shrink-0" size={20} />
+                                <span className="text-slate-700">{step}</span>
+                            </li>
+                        ))}
+                    </ul>
+                );
+            case 'sowing':
+                return (
+                    <div className="space-y-4">
+                        <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+                            <h4 className="font-bold text-green-900 mb-2 flex items-center gap-2"><Calendar size={18}/> Sowing Period</h4>
+                            <p className="text-green-800">{selectedCrop.sowing.period}</p>
                         </div>
-                    </button>
-                ))}
-            </div>
-
-            {/* Weather Alert Banner */}
-            {advisoryAlert.message && (
-                <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 animate-in fade-in slide-in-from-top-2 ${
-                    advisoryAlert.type === 'danger' ? 'bg-red-50 border-red-200 text-red-800' :
-                    advisoryAlert.type === 'warning' ? 'bg-orange-50 border-orange-200 text-orange-800' :
-                    'bg-green-50 border-green-200 text-green-800'
-                }`}>
-                    <div className={`mt-0.5 ${
-                        advisoryAlert.type === 'danger' ? 'text-red-500' : 
-                        advisoryAlert.type === 'warning' ? 'text-orange-500' : 'text-green-500'
-                    }`}>
-                        {advisoryAlert.type === 'safe' ? <Sun size={20} /> : <AlertTriangle size={20} />}
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div className="bg-white border p-4 rounded-xl">
+                                <h4 className="font-bold text-slate-700 mb-1">Seed Rate</h4>
+                                <p className="text-slate-600">{selectedCrop.sowing.seedRate}</p>
+                            </div>
+                            <div className="bg-white border p-4 rounded-xl">
+                                <h4 className="font-bold text-slate-700 mb-1">Method</h4>
+                                <p className="text-slate-600">{selectedCrop.sowing.method}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h4 className="font-bold text-sm uppercase mb-1">Crop-Weather Insight</h4>
-                        <p className="text-sm font-medium">{advisoryAlert.message}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Detailed Content Area */}
-            <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 min-h-[600px] flex flex-col md:flex-row">
-                
-                {/* Tabs Sidebar */}
-                <div className="bg-slate-50 md:w-64 border-r border-slate-200 flex flex-row md:flex-col overflow-x-auto md:overflow-visible">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-3 px-6 py-5 text-sm font-bold transition-all whitespace-nowrap md:whitespace-normal border-b md:border-b-0 md:border-l-4 ${
-                                activeTab === tab.id
-                                ? 'bg-white text-[#2E7D32] border-[#2E7D32] shadow-sm'
-                                : 'text-slate-500 border-transparent hover:bg-slate-100'
-                            }`}
-                        >
-                            {tab.icon}
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Content Panel */}
-                <div className="flex-1 p-8">
-                    <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-4">
-                        <h3 className="text-2xl font-bold text-slate-800">{selectedCrop.name}</h3>
-                        <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-                            {tabs.find(t => t.id === activeTab)?.label} Stage
-                        </span>
-                    </div>
-
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        
-                        {activeTab === 'prep' && (
-                            <div className="space-y-4">
-                                <h4 className="text-lg font-bold text-slate-700 mb-2">Land Preparation</h4>
-                                <ul className="space-y-3">
-                                    {selectedCrop.preparation.map((step, idx) => (
-                                        <li key={idx} className="flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                            <span className="flex-shrink-0 w-6 h-6 bg-[#FBC02D] text-[#1B5E20] rounded-full flex items-center justify-center font-bold text-sm">{idx + 1}</span>
-                                            <p className="text-slate-700">{step}</p>
+                );
+            case 'fertilizer':
+                return (
+                    <div className="space-y-4">
+                        {selectedCrop.fertilizer.map((dose, idx) => (
+                            <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div className="flex justify-between items-center mb-2">
+                                    <h4 className="font-bold text-[#2E7D32]">{dose.stage}</h4>
+                                    <span className="text-xs bg-slate-100 px-2 py-1 rounded font-bold text-slate-500">{dose.timing}</span>
+                                </div>
+                                <ul className="space-y-1">
+                                    {dose.activities.map((act, i) => (
+                                        <li key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                                            <Beaker size={14} className="text-purple-500" /> {act}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
-                        )}
-
-                        {activeTab === 'sow' && (
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
-                                    <h4 className="text-blue-900 font-bold mb-4 flex items-center gap-2">
-                                        <Calendar size={20} /> Best Time
-                                    </h4>
-                                    <p className="text-blue-800 text-lg font-medium">{selectedCrop.sowing.period}</p>
-                                </div>
-                                <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
-                                    <h4 className="text-green-900 font-bold mb-4 flex items-center gap-2">
-                                        <Sprout size={20} /> Seed Rate
-                                    </h4>
-                                    <p className="text-green-800 text-lg font-medium">{selectedCrop.sowing.seedRate}</p>
-                                </div>
-                                <div className="col-span-1 md:col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                                    <h4 className="text-slate-700 font-bold mb-2">Method</h4>
-                                    <p className="text-slate-600">{selectedCrop.sowing.method}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'fert' && (
-                            <div className="space-y-6">
-                                {selectedCrop.fertilizer.map((item, idx) => (
-                                    <div key={idx} className="relative pl-8 border-l-2 border-dashed border-green-300 pb-8 last:pb-0">
-                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-500 ring-4 ring-green-100"></div>
-                                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <h5 className="font-bold text-green-700">{item.stage}</h5>
-                                                <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold">{item.timing}</span>
-                                            </div>
-                                            <ul className="list-disc pl-5 space-y-1 text-slate-600">
-                                                {item.activities.map((act, i) => (
-                                                    <li key={i}>{act}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {activeTab === 'spray' && (
-                            <div className="space-y-6">
-                                {selectedCrop.spraying.map((item, idx) => (
-                                    <div key={idx} className="bg-orange-50 p-5 rounded-xl border border-orange-100">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h5 className="font-bold text-orange-800 flex items-center gap-2">
-                                                <AlertTriangle size={18} />
-                                                {item.stage}
-                                            </h5>
-                                            <span className="text-xs bg-white text-orange-600 border border-orange-200 px-2 py-1 rounded font-bold">{item.timing}</span>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {item.activities.map((act, i) => (
-                                                <div key={i} className="flex items-center gap-2 text-sm text-slate-700">
-                                                    <Check size={16} className="text-orange-500" />
-                                                    {act}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {activeTab === 'disease' && (
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {selectedCrop.diseases.map((d, idx) => (
-                                    <div key={idx} className="bg-red-50 p-6 rounded-2xl border border-red-100">
-                                        <h4 className="font-bold text-red-900 text-lg mb-3">{d.name}</h4>
-                                        <div className="mb-4">
-                                            <p className="text-xs font-bold text-red-400 uppercase mb-1">Symptoms</p>
-                                            <p className="text-sm text-red-800">{d.symptoms}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-green-600 uppercase mb-1">Solution</p>
-                                            <p className="text-sm text-slate-700 bg-white p-2 rounded border border-red-100">{d.solution}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {activeTab === 'irrig' && (
-                            <div className="bg-cyan-50 p-8 rounded-2xl border border-cyan-100">
-                                <div className="flex items-start gap-4">
-                                    <Droplets size={40} className="text-cyan-600" />
-                                    <div className="space-y-4">
-                                        <h4 className="font-bold text-cyan-900 text-lg">Irrigation Management</h4>
-                                        <ul className="space-y-3">
-                                            {selectedCrop.irrigation.map((point, idx) => (
-                                                <li key={idx} className="flex items-start gap-2 text-cyan-800">
-                                                    <span className="mt-1.5 w-1.5 h-1.5 bg-cyan-500 rounded-full shrink-0"></span>
-                                                    {point}
-                                                </li>
-                                            ))}
-                                        </ul>
+                        ))}
+                    </div>
+                );
+            case 'spraying':
+                return (
+                    <div className="space-y-4">
+                         {selectedCrop.spraying.map((spray, idx) => (
+                            <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-red-50 rounded-bl-full -mr-8 -mt-8 z-0"></div>
+                                <div className="relative z-10">
+                                    <h4 className="font-bold text-slate-800 mb-1">{spray.stage}</h4>
+                                    <p className="text-xs text-slate-400 mb-3 font-bold uppercase">{spray.timing}</p>
+                                    <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                                        {spray.activities.map((act, i) => (
+                                            <p key={i} className="flex items-center gap-2 text-sm text-red-900 font-medium">
+                                                <Bug size={14} /> {act}
+                                            </p>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
-                        )}
-
-                        {activeTab === 'yield' && (
-                            <div className="flex flex-col items-center justify-center py-12 text-center bg-yellow-50 rounded-2xl border border-yellow-100">
-                                <div className="bg-white p-6 rounded-full shadow-lg mb-6">
-                                    <TrendingUp size={48} className="text-[#2E7D32]" />
+                        ))}
+                    </div>
+                );
+             case 'diseases':
+                return (
+                    <div className="space-y-4">
+                        {selectedCrop.diseases.map((dis, idx) => (
+                            <div key={idx} className="bg-orange-50 border border-orange-100 rounded-xl p-4">
+                                <h4 className="font-bold text-orange-900 text-lg mb-2">{dis.name}</h4>
+                                <div className="space-y-2 text-sm">
+                                    <p><strong className="text-orange-800">Symptoms:</strong> {dis.symptoms}</p>
+                                    <p><strong className="text-green-800">Solution:</strong> {dis.solution}</p>
                                 </div>
-                                <h4 className="text-slate-500 font-medium mb-2 uppercase tracking-widest text-xs">Expected Yield</h4>
-                                <h2 className="text-4xl md:text-5xl font-extrabold text-[#2E7D32] mb-4">{selectedCrop.yieldEstimate}</h2>
-                                <p className="text-slate-500 text-sm max-w-md">
-                                    *Estimates depend on soil quality, weather conditions, and farm management practices.
-                                </p>
                             </div>
-                        )}
+                        ))}
+                    </div>
+                );
+             case 'irrigation':
+                return (
+                    <ul className="space-y-3">
+                        {selectedCrop.irrigation.map((step, idx) => (
+                            <li key={idx} className="flex items-start gap-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <Droplets className="text-blue-500 mt-1 shrink-0" size={20} />
+                                <span className="text-slate-700">{step}</span>
+                            </li>
+                        ))}
+                    </ul>
+                );
+            default:
+                return null;
+        }
+    };
 
+    return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                        <ClipboardList className="text-[#2E7D32]" size={32} />
+                        Crop Advisory
+                    </h2>
+                    <p className="text-slate-600 mt-1">Stage-wise expert guidance for maximum yield.</p>
+                </div>
+                
+                <button 
+                    onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-all ${
+                        notificationsEnabled 
+                        ? 'bg-[#2E7D32] text-white shadow-lg' 
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                >
+                    {notificationsEnabled ? <BellRing size={18} /> : <Bell size={18} />}
+                    {notificationsEnabled ? 'Weekly Alerts On' : 'Enable Weekly Alerts'}
+                </button>
+            </div>
+
+            {/* Crop Selector */}
+            <div className="flex gap-4 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+                {CROP_DATA.map((crop) => (
+                    <button
+                        key={crop.id}
+                        onClick={() => setSelectedCropId(crop.id)}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-xl whitespace-nowrap font-bold transition-all ${
+                            selectedCropId === crop.id 
+                            ? 'bg-[#2E7D32] text-white shadow-md transform scale-105' 
+                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-green-50'
+                        }`}
+                    >
+                        <Sprout size={18} />
+                        {crop.name}
+                    </button>
+                ))}
+            </div>
+
+            {/* Main Content Area */}
+            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden flex flex-col lg:flex-row">
+                
+                {/* Left: Image & Stats */}
+                <div className="lg:w-1/3 bg-slate-50 p-6 border-r border-slate-100">
+                    <img 
+                        src={selectedCrop.image} 
+                        alt={selectedCrop.name} 
+                        className="w-full h-56 object-cover rounded-2xl shadow-sm mb-6" 
+                    />
+                    <h3 className="text-2xl font-bold text-slate-800 mb-1">{selectedCrop.name}</h3>
+                    <p className="text-slate-500 italic mb-6">{selectedCrop.scientificName}</p>
+                    
+                    <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-6">
+                        <h4 className="font-bold text-yellow-800 flex items-center gap-2 mb-2">
+                            <TrendingUp size={18} /> Est. Yield
+                        </h4>
+                        <p className="text-slate-800 font-bold text-lg">{selectedCrop.yieldEstimate}</p>
+                    </div>
+
+                    <div className="text-xs text-slate-400">
+                        <p className="flex items-center gap-1 mb-1"><Info size={12}/> Based on Vidarbha region data.</p>
+                        <p>Updated for Season 2024-25</p>
+                    </div>
+                </div>
+
+                {/* Right: Advisory Tabs */}
+                <div className="lg:w-2/3 flex flex-col">
+                    {/* Tabs */}
+                    <div className="flex overflow-x-auto border-b border-slate-100">
+                        {[
+                            { id: 'prep', label: 'Preparation', icon: <Tractor size={16}/> },
+                            { id: 'sowing', label: 'Sowing', icon: <Sprout size={16}/> },
+                            { id: 'fertilizer', label: 'Fertilizers', icon: <Beaker size={16}/> },
+                            { id: 'spraying', label: 'Spraying', icon: <Bug size={16}/> },
+                            { id: 'diseases', label: 'Diseases', icon: <AlertTriangle size={16}/> },
+                            { id: 'irrigation', label: 'Irrigation', icon: <Droplets size={16}/> },
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 gap-1 text-xs font-bold transition-colors ${
+                                    activeTab === tab.id 
+                                    ? 'text-[#2E7D32] border-b-2 border-[#2E7D32] bg-green-50/50' 
+                                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                                }`}
+                            >
+                                {tab.icon}
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Alert Banner (Weather Integrated) */}
+                    {weatherAlert && (
+                        <div className={`m-6 mb-0 p-4 rounded-xl flex items-start gap-3 border animate-in fade-in slide-in-from-top-2 ${
+                            weatherAlert.type === 'danger' ? 'bg-red-50 border-red-200 text-red-900' :
+                            weatherAlert.type === 'warning' ? 'bg-orange-50 border-orange-200 text-orange-900' :
+                            'bg-green-50 border-green-200 text-green-900'
+                        }`}>
+                            {weatherAlert.type === 'danger' ? <AlertTriangle className="shrink-0 mt-0.5" /> : 
+                             weatherAlert.type === 'warning' ? <AlertTriangle className="shrink-0 mt-0.5" /> : 
+                             <Check className="shrink-0 mt-0.5" />}
+                            <div>
+                                <h4 className="font-bold text-sm">Crop-Weather Insight</h4>
+                                <p className="text-sm">{weatherAlert.message}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Content */}
+                    <div className="p-6 flex-1 overflow-y-auto max-h-[600px]">
+                        {renderTabContent()}
                     </div>
                 </div>
             </div>
-
-            {/* Toast Notification */}
-            {showToast && (
-                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 animate-in fade-in slide-in-from-bottom-4">
-                    {isSubscribed ? <Check size={20} className="text-green-400" /> : <Info size={20} />}
-                    <span>{isSubscribed ? 'Subscribed to weekly crop alerts!' : 'Unsubscribed from alerts.'}</span>
-                </div>
-            )}
         </div>
     );
 };

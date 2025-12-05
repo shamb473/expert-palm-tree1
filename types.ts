@@ -35,7 +35,9 @@ export enum AppView {
   ADVISORY = 'ADVISORY',
   CONTACT = 'CONTACT',
   LOGIN = 'LOGIN',
-  VISITORS = 'VISITORS'
+  VISITORS = 'VISITORS',
+  MENU = 'MENU',
+  CALCULATOR = 'CALCULATOR'
 }
 
 export interface MarketRate {
@@ -43,15 +45,6 @@ export interface MarketRate {
   date: string;
   crop: string;
   market: string;
-  price: string;
-  trend: string;
-  isAiVerified?: boolean;
-}
-
-export interface BullionRate {
-  id: string;
-  date: string;
-  metal: string;
   price: string;
   trend: string;
   isAiVerified?: boolean;

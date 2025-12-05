@@ -1,8 +1,10 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User as UserIcon, Loader2, Sparkles, AlertCircle, ShieldCheck, Power, Lock, Camera, X, Scan, CheckCircle, ShoppingCart, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Send, Bot, User as UserIcon, Loader2, Sparkles, AlertCircle, ShieldCheck, Power, Lock, Camera, X, Scan, CheckCircle, ShoppingCart, ArrowRight, AlertTriangle, Mic, MicOff } from 'lucide-react';
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import { Message, User, Product } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface AIChatProps {
     user: User | null;
@@ -20,11 +22,12 @@ interface AnalysisResult {
 }
 
 export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, products, onAddToCart }) => {
+  const { language } = useLanguage(); // Get current language context
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       role: 'model',
-      text: "Namaste! I am your Krushi Mitra. \n\n**Option 1:** Type your query below.\n**Option 2:** Click the 'Scan Crop' button to detect diseases using your camera.",
+      text: "Namaste! I am your Krushi Mitra. \n\n**Option 1:** Type or Speak your query.\n**Option 2:** Click the 'Scan Crop' button to detect diseases using your camera.",
       timestamp: new Date()
     }
   ]);
@@ -32,6 +35,10 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
+  // --- VOICE INPUT STATE ---
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
   // --- SCANNER STATES ---
   const [scanStep, setScanStep] = useState<0 | 1 | 2 | 3>(0); // 0: Idle, 1: Camera, 2: Processing, 3: Result
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
@@ -65,6 +72,7 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
         1. Identify crop diseases and pests.
         2. EXPLAIN symptoms clearly.
         3. DIAGNOSE based on descriptions.
+        4. Respond in the language the user asks in (Marathi or English).
         
         IMPORTANT:
         - Do NOT recommend generic chemical names or specific brands unless they are strictly common knowledge (like Neem Oil).
@@ -77,6 +85,13 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
   // Initialize chat on mount
   useEffect(() => {
     chatSessionRef.current = initializeChat();
+    
+    // Cleanup recognition on unmount
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
   }, []);
 
   const handleSend = async () => {
@@ -141,6 +156,49 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
       handleSend();
     }
   };
+
+  // --- VOICE INPUT HANDLER ---
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Your browser does not support voice input. Please use Google Chrome.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = language === 'mr' ? 'mr-IN' : 'en-IN'; // Set language based on app context
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(prev => (prev ? prev + ' ' + transcript : transcript));
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
 
   // --- CAMERA & ANALYSIS LOGIC ---
 
@@ -521,12 +579,26 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
               <Camera size={24} className="text-green-600" />
           </button>
 
+          {/* MIC BUTTON */}
+          <button 
+            onClick={toggleListening}
+            disabled={!isEnabled}
+            className={`p-3 rounded-full transition-all flex items-center justify-center border ${
+                isListening 
+                ? 'bg-red-500 text-white border-red-500 animate-pulse' 
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+            }`}
+            title="Voice Input"
+          >
+              {isListening ? <MicOff size={24} /> : <Mic size={24} className="text-blue-600" />}
+          </button>
+
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Describe symptoms or scan image..."
+            placeholder={isListening ? "Listening..." : "Describe symptoms..."}
             className="flex-1 bg-slate-100 border-none rounded-full px-6 py-4 text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all outline-none"
             disabled={isLoading || !isEnabled}
           />

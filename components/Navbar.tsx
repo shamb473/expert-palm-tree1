@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { AppView, User } from '../types';
-import { Sprout, Menu, X, ShoppingBag, MessageSquare, Phone, Home, LogIn, LogOut, User as UserIcon, BookOpen, ClipboardList, Languages, Users } from 'lucide-react';
+import { Sprout, ShoppingBag, MessageSquare, Phone, Home, LogIn, LogOut, User as UserIcon, BookOpen, ClipboardList, Languages, Users, Menu, X, FlaskConical, Heart, ArrowLeft, Grid } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface NavbarProps {
@@ -12,16 +12,24 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView, user, onLogout }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
-  const navItems = [
-    { view: AppView.HOME, label: t.nav.home, icon: <Home size={20} /> },
-    { view: AppView.PRODUCTS, label: t.nav.products, icon: <ShoppingBag size={20} /> },
-    { view: AppView.ADVISORY, label: t.nav.advisory, icon: <ClipboardList size={20} /> },
-    { view: AppView.ADVISOR, label: t.nav.advisor, icon: <MessageSquare size={20} /> },
-    { view: AppView.SCHEMES, label: t.nav.schemes, icon: <BookOpen size={20} /> },
-    { view: AppView.CONTACT, label: t.nav.contact, icon: <Phone size={20} /> },
+  // Desktop Nav Items
+  const desktopNavItems = [
+    { view: AppView.HOME, label: t.nav.home, icon: <Home size={24} /> },
+    { view: AppView.PRODUCTS, label: t.nav.products, icon: <ShoppingBag size={24} /> },
+    { view: AppView.ADVISOR, label: 'AI Mitra', icon: <MessageSquare size={24} /> },
+    { view: AppView.ADVISORY, label: t.nav.advisory, icon: <ClipboardList size={24} /> },
+    { view: AppView.SCHEMES, label: t.nav.schemes, icon: <BookOpen size={24} /> },
+  ];
+
+  // Mobile Bottom Nav Items (Replaced Schemes with Menu)
+  const mobileNavItems = [
+    { view: AppView.HOME, label: 'Home', icon: <Home size={24} /> },
+    { view: AppView.PRODUCTS, label: 'Shop', icon: <ShoppingBag size={24} /> },
+    { view: AppView.ADVISOR, label: 'AI', icon: <MessageSquare size={24} /> },
+    { view: AppView.ADVISORY, label: 'Crop', icon: <ClipboardList size={24} /> },
+    { view: AppView.MENU, label: 'Menu', icon: <Grid size={24} /> },
   ];
 
   const toggleLanguage = () => {
@@ -29,177 +37,132 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView, user,
   };
 
   return (
-    <nav className="bg-[#2E7D32] text-white sticky top-0 z-50 shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div 
-            className="flex items-center space-x-2 cursor-pointer" 
-            onClick={() => onChangeView(AppView.HOME)}
-          >
-            <Sprout size={32} className="text-[#FBC02D]" />
-            <div className="flex flex-col">
-              <span className="font-bold text-lg leading-tight">Kastkar</span>
-              <span className="text-xs text-[#81C784] font-medium">Krushi Seva Kendra</span>
+    <>
+      {/* --- TOP NAVBAR (Compact Branding) --- */}
+      <nav className="bg-[#2E7D32] text-white sticky top-0 z-50 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14">
+            
+            {/* Left Section: Back Btn & Logo */}
+            <div className="flex items-center gap-1">
+                {currentView !== AppView.HOME && (
+                    <button 
+                        onClick={() => onChangeView(AppView.HOME)}
+                        className="p-1.5 rounded-full hover:bg-[#1B5E20] text-white transition-colors mr-1"
+                        aria-label="Back"
+                    >
+                        <ArrowLeft size={22} />
+                    </button>
+                )}
+                
+                <div 
+                  className="flex items-center space-x-2 cursor-pointer active:opacity-80 transition-opacity" 
+                  onClick={() => onChangeView(AppView.HOME)}
+                >
+                  <div className="bg-white p-1.5 rounded-lg shadow-sm">
+                    <Sprout size={20} className="text-[#2E7D32]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-extrabold text-base leading-none tracking-tight">Kastkar</span>
+                    <span className="text-[9px] text-[#FBC02D] font-medium tracking-wider uppercase">Krushi Seva</span>
+                  </div>
+                </div>
             </div>
-          </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
-            <div className="flex space-x-1 lg:space-x-2">
-              {navItems.map((item) => (
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
+              {desktopNavItems.map((item) => (
                 <button
                   key={item.label}
                   onClick={() => onChangeView(item.view)}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${
                     currentView === item.view
-                      ? 'bg-[#1B5E20] text-white shadow-inner'
-                      : 'text-[#81C784] hover:bg-[#1B5E20] hover:text-white'
+                      ? 'bg-[#1B5E20] text-[#FBC02D] shadow-inner'
+                      : 'text-green-100 hover:bg-[#1B5E20] hover:text-white'
                   }`}
                 >
-                  {React.cloneElement(item.icon as React.ReactElement<any>, { className: currentView === item.view ? 'text-[#FBC02D]' : 'currentColor' })}
-                  <span className="whitespace-nowrap">{item.label}</span>
+                  {React.cloneElement(item.icon as React.ReactElement<any>, { size: 18 })}
+                  <span>{item.label}</span>
                 </button>
               ))}
             </div>
 
-            {/* Language Toggle */}
-            <button 
-                onClick={toggleLanguage}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-full bg-[#1B5E20] hover:bg-green-900 border border-[#81C784]/30 text-white transition-all ml-2"
-                title="Switch Language"
-            >
-                <Languages size={16} className="text-[#FBC02D]" />
-                <span className={`text-xs font-bold ${language === 'en' ? 'text-[#FBC02D]' : 'text-slate-300'}`}>EN</span>
-                <span className="text-slate-400">|</span>
-                <span className={`text-xs font-bold ${language === 'mr' ? 'text-[#FBC02D]' : 'text-slate-300'}`}>म</span>
-            </button>
-
-            {/* Divider */}
-            <div className="h-6 w-px bg-[#81C784] mx-2 opacity-30"></div>
-
-            {/* Auth Section */}
-            {user ? (
-              <div className="flex items-center space-x-4">
-                 {/* Owner Visitor Log Button */}
-                <button
-                  onClick={() => onChangeView(AppView.VISITORS)}
-                  className={`p-2 rounded-full transition-colors ${
-                    currentView === AppView.VISITORS ? 'bg-[#FBC02D] text-[#1B5E20]' : 'hover:bg-[#1B5E20] text-[#81C784] hover:text-white'
-                  }`}
-                  title="Visitor Log"
-                >
-                  <Users size={20} />
-                </button>
-
-                <div className="flex items-center space-x-2 text-white px-3 py-1.5 bg-[#1B5E20] rounded-full border border-[#81C784]/30">
-                  <div className="bg-white text-[#2E7D32] p-1 rounded-full">
-                    <UserIcon size={14} />
-                  </div>
-                  <span className="font-medium text-sm pr-1 truncate max-w-[80px]">Hi, {user.name.split(' ')[0]}</span>
-                </div>
-                <button 
-                  onClick={onLogout}
-                  className="p-2 rounded-full hover:bg-[#1B5E20] text-[#81C784] hover:text-white transition-colors"
-                  title="Logout"
-                >
-                  <LogOut size={20} />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => onChangeView(AppView.LOGIN)}
-                className={`flex items-center space-x-2 px-5 py-2 rounded-full text-sm font-bold transition-all shadow-md ${
-                  currentView === AppView.LOGIN
-                    ? 'bg-[#FBC02D] text-[#1B5E20] ring-2 ring-white/30'
-                    : 'bg-white text-[#2E7D32] hover:bg-[#FBC02D] hover:text-[#1B5E20]'
-                }`}
+            {/* Right Side: Language & User */}
+            <div className="flex items-center gap-3">
+               {/* Language Toggle */}
+              <button 
+                  onClick={toggleLanguage}
+                  className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#1B5E20]/50 border border-[#81C784]/30 text-white transition-all hover:bg-[#1B5E20]"
               >
-                <LogIn size={18} />
-                <span>{t.nav.login}</span>
+                  <Languages size={14} className="text-[#FBC02D]" />
+                  <span className={`text-[10px] font-bold ${language === 'en' ? 'text-white' : 'text-green-200'}`}>EN</span>
+                  <span className="text-green-400 text-[10px]">|</span>
+                  <span className={`text-[10px] font-bold ${language === 'mr' ? 'text-white' : 'text-green-200'}`}>म</span>
               </button>
-            )}
-          </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-2">
-            <button 
-                onClick={toggleLanguage}
-                className="flex items-center space-x-1 px-2 py-1.5 rounded-full bg-[#1B5E20] border border-[#81C784]/30 text-white"
-            >
-                <span className={`text-xs font-bold ${language === 'en' ? 'text-[#FBC02D]' : 'text-slate-300'}`}>EN</span>
-                <span className="text-slate-400">|</span>
-                <span className={`text-xs font-bold ${language === 'mr' ? 'text-[#FBC02D]' : 'text-slate-300'}`}>म</span>
-            </button>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-md text-[#81C784] hover:text-white hover:bg-[#1B5E20] focus:outline-none"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-[#2E7D32] border-t border-[#1B5E20]">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  onChangeView(item.view);
-                  setIsMenuOpen(false);
-                }}
-                className={`flex w-full items-center space-x-3 px-3 py-3 rounded-md text-base font-medium ${
-                  currentView === item.view
-                    ? 'bg-[#1B5E20] text-white'
-                    : 'text-[#81C784] hover:bg-[#1B5E20] hover:text-white'
-                }`}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
-            
-            {/* Mobile Auth */}
-            <div className="border-t border-[#1B5E20] mt-2 pt-2 pb-1">
               {user ? (
-                <>
-                   <button 
-                    onClick={() => { onChangeView(AppView.VISITORS); setIsMenuOpen(false); }}
-                    className="flex w-full items-center space-x-3 px-3 py-3 rounded-md text-base font-medium text-[#FBC02D] hover:bg-[#1B5E20]"
+                <div className="flex items-center gap-2">
+                   <button
+                    onClick={() => onChangeView(AppView.VISITORS)}
+                    className="p-1.5 rounded-full hover:bg-[#1B5E20] text-[#FBC02D]"
+                    title="Visitor Log"
                   >
                     <Users size={20} />
-                    <span>Visitor Log</span>
                   </button>
-
-                  <div className="flex items-center px-3 py-3 text-white font-medium bg-[#1B5E20]/30 rounded-md mb-2 mx-2">
-                    <UserIcon size={20} className="mr-3 text-[#FBC02D]" />
-                    <span>Hi, {user.name}</span>
-                  </div>
                   <button 
-                    onClick={() => { onLogout(); setIsMenuOpen(false); }}
-                    className="flex w-full items-center space-x-3 px-3 py-3 rounded-md text-base font-medium text-red-200 hover:bg-red-900/30 hover:text-red-100"
+                    onClick={onLogout}
+                    className="p-1.5 rounded-full hover:bg-red-900/50 text-red-200 hover:text-red-100 transition-colors"
+                    title="Logout"
                   >
                     <LogOut size={20} />
-                    <span>{t.nav.logout}</span>
                   </button>
-                </>
+                </div>
               ) : (
                 <button
-                  onClick={() => { onChangeView(AppView.LOGIN); setIsMenuOpen(false); }}
-                  className="flex w-full items-center space-x-3 px-3 py-3 rounded-md text-base font-medium text-[#FBC02D] hover:bg-[#1B5E20]"
+                  onClick={() => onChangeView(AppView.LOGIN)}
+                  className="flex items-center space-x-1 px-3 py-1.5 rounded-full bg-[#FBC02D] text-[#1B5E20] text-xs font-bold shadow-md hover:bg-yellow-400 transition-transform active:scale-95"
                 >
-                  <LogIn size={20} />
-                  <span>{t.nav.login} / Register</span>
+                  <LogIn size={14} />
+                  <span className="hidden sm:inline">{t.nav.login}</span>
                 </button>
               )}
             </div>
           </div>
         </div>
-      )}
-    </nav>
+      </nav>
+
+      {/* --- MOBILE BOTTOM NAVIGATION (Floating) --- */}
+      <div className="md:hidden fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 rounded-2xl h-16">
+        <div className="flex justify-around items-center h-full px-1">
+          {mobileNavItems.map((item) => {
+            const isActive = currentView === item.view;
+            return (
+              <button
+                key={item.label}
+                onClick={() => onChangeView(item.view)}
+                className="flex-1 flex flex-col items-center justify-center h-full relative"
+              >
+                <div className={`transition-all duration-300 ${
+                  isActive 
+                  ? 'text-[#2E7D32] -translate-y-1' 
+                  : 'text-slate-400'
+                }`}>
+                  {React.cloneElement(item.icon as React.ReactElement<any>, { 
+                    size: 24, 
+                    strokeWidth: isActive ? 2.5 : 2,
+                    className: isActive ? 'drop-shadow-sm' : ''
+                  })}
+                </div>
+                {isActive && (
+                    <span className="absolute bottom-1 w-1 h-1 bg-[#2E7D32] rounded-full"></span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      
+    </>
   );
 };
+    

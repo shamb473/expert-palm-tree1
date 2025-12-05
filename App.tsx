@@ -10,17 +10,14 @@ import { Schemes } from './components/Schemes';
 import { CropAdvisory } from './components/CropAdvisory';
 import { VisitorEntry } from './components/VisitorEntry';
 import { VisitorList } from './components/VisitorList';
-import { AppView, User, Product, MarketRate, BullionRate, FarmerProfile, Visitor, DailyWeather } from './types';
+import { Menu } from './components/Menu';
+import { Calculator } from './components/Calculator';
+import { AppView, User, Product, MarketRate, FarmerProfile, Visitor, DailyWeather } from './types';
 import { MessageCircle, CheckCircle } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 // --- INITIAL DATA GENERATION ---
 const getToday = () => new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-const getPastDate = (days: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-};
 
 // Initial Mock Data for Products
 const INITIAL_PRODUCTS: Product[] = [
@@ -144,17 +141,6 @@ const INITIAL_MARKET_RATES: MarketRate[] = [
     { id: '12', date: getToday(), crop: 'Onion', market: 'Lasalgaon', price: '₹1,200 - ₹1,800', trend: '-2.0%' }
 ];
 
-// Initial Mock Data for Bullion Rates
-const INITIAL_BULLION_RATES: BullionRate[] = [
-    { id: '1', date: 'Dec 2025', metal: 'Gold 24K (10g)', price: '₹85,000', trend: 'Forecast' },
-    { id: '2', date: 'Dec 2025', metal: 'Silver (1kg)', price: '₹95,000', trend: 'Forecast' },
-    { id: '3', date: getToday(), metal: 'Gold 24K (10g)', price: '₹72,500', trend: '+0.4%' },
-    { id: '4', date: getToday(), metal: 'Gold 22K (10g)', price: '₹66,800', trend: '+0.4%' },
-    { id: '5', date: getToday(), metal: 'Silver (1kg)', price: '₹84,200', trend: '-0.2%' },
-    { id: '6', date: getPastDate(1), metal: 'Gold 24K (10g)', price: '₹72,200', trend: '+0.1%' },
-    { id: '7', date: getPastDate(1), metal: 'Silver (1kg)', price: '₹84,400', trend: '+0.5%' },
-];
-
 // Initial Farmer of the Year
 const INITIAL_FARMERS: FarmerProfile[] = [
     {
@@ -185,7 +171,6 @@ export default function App() {
   // Data States
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [marketRates, setMarketRates] = useState<MarketRate[]>(INITIAL_MARKET_RATES);
-  const [bullionRates, setBullionRates] = useState<BullionRate[]>(INITIAL_BULLION_RATES);
   const [farmersList, setFarmersList] = useState<FarmerProfile[]>(INITIAL_FARMERS);
   
   // Weather State
@@ -291,12 +276,10 @@ export default function App() {
                 Act as a real-time agricultural data parser. 
                 Generate JSON data for:
                 1. Market Rates for Akola/Akot (Cotton, Soybean, Tur) based on typical current market trends in Maharashtra.
-                2. Live Bullion Rates (Gold 24K, Silver) in INR.
-
+                
                 Return strictly JSON:
                 {
-                    "marketRates": [ { "crop": "Cotton", "market": "Akola", "price": "₹7000", "trend": "+1%" } ... ],
-                    "bullionRates": [ { "metal": "Gold 24K", "price": "₹73000", "trend": "+0.2%" } ... ]
+                    "marketRates": [ { "crop": "Cotton", "market": "Akola", "price": "₹7000", "trend": "+1%" } ... ]
                 }
             `;
 
@@ -323,21 +306,6 @@ export default function App() {
                     setMarketRates(prev => {
                         const manual = prev.filter(p => !p.id.startsWith('ai-'));
                         return [...newRates, ...manual].slice(0, 15);
-                    });
-                }
-
-                if (data.bullionRates && Array.isArray(data.bullionRates)) {
-                    const newBullion = data.bullionRates.map((r: any, idx: number) => ({
-                        id: `ai-${idx}`,
-                        date: getToday(),
-                        metal: r.metal,
-                        price: r.price,
-                        trend: r.trend,
-                        isAiVerified: true
-                    }));
-                    setBullionRates(prev => {
-                        const manual = prev.filter(p => !p.id.startsWith('ai-'));
-                        return [...newBullion, ...manual].slice(0, 10);
                     });
                 }
             }
@@ -398,15 +366,6 @@ export default function App() {
       setMarketRates(prev => prev.filter(r => r.id !== id));
   };
 
-  // --- Bullion Rate Handlers ---
-  const handleAddBullionRate = (rate: BullionRate) => {
-      setBullionRates(prev => [rate, ...prev]);
-  };
-
-  const handleDeleteBullionRate = (id: string) => {
-      setBullionRates(prev => prev.filter(r => r.id !== id));
-  };
-
   // --- Farmer Handlers ---
   const handleAddFarmer = (farmer: FarmerProfile) => {
       setFarmersList(prev => [farmer, ...prev]);
@@ -448,9 +407,6 @@ export default function App() {
                 marketRates={marketRates}
                 onAddMarketRate={handleAddMarketRate}
                 onDeleteMarketRate={handleDeleteMarketRate}
-                bullionRates={bullionRates}
-                onAddBullionRate={handleAddBullionRate}
-                onDeleteBullionRate={handleDeleteBullionRate}
                 farmersList={farmersList}
                 onAddFarmer={handleAddFarmer}
                 onUpdateFarmer={handleUpdateFarmer}
@@ -492,6 +448,10 @@ export default function App() {
         return <Login onLogin={handleLogin} />;
       case AppView.VISITORS:
         return <VisitorList visitors={visitors} />;
+      case AppView.MENU:
+        return <Menu onNavigate={setCurrentView} user={user} onLogout={handleLogout} />;
+      case AppView.CALCULATOR:
+        return <Calculator />;
       default:
         return (
             <Hero 
@@ -500,9 +460,6 @@ export default function App() {
                 marketRates={marketRates}
                 onAddMarketRate={handleAddMarketRate}
                 onDeleteMarketRate={handleDeleteMarketRate}
-                bullionRates={bullionRates}
-                onAddBullionRate={handleAddBullionRate}
-                onDeleteBullionRate={handleDeleteBullionRate}
                 farmersList={farmersList}
                 onAddFarmer={handleAddFarmer}
                 onUpdateFarmer={handleUpdateFarmer}
