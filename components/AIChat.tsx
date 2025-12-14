@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User as UserIcon, Loader2, Sparkles, AlertCircle, ShieldCheck, Power, Lock, Camera, X, Scan, CheckCircle, ShoppingCart, ArrowRight, AlertTriangle, Mic, MicOff } from 'lucide-react';
+import { Send, Bot, User as UserIcon, Loader2, Sparkles, AlertCircle, ShieldCheck, Power, Lock, Camera, X, Scan, CheckCircle, ShoppingCart, ArrowRight, AlertTriangle, Mic, MicOff, CameraOff } from 'lucide-react';
 import { GoogleGenAI, Chat, GenerateContentResponse, Type } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import { Message, User, Product } from '../types';
@@ -12,6 +12,11 @@ interface AIChatProps {
     onToggle: () => void;
     products: Product[];
     onAddToCart: (product: Product) => void;
+    // New Props for Feature Control
+    isMicEnabled: boolean;
+    isCamEnabled: boolean;
+    onToggleMic: () => void;
+    onToggleCam: () => void;
 }
 
 interface AnalysisResult {
@@ -21,13 +26,23 @@ interface AnalysisResult {
     explanation: string;
 }
 
-export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, products, onAddToCart }) => {
+export const AIChat: React.FC<AIChatProps> = ({ 
+    user, 
+    isEnabled, 
+    onToggle, 
+    products, 
+    onAddToCart,
+    isMicEnabled,
+    isCamEnabled,
+    onToggleMic,
+    onToggleCam
+}) => {
   const { language } = useLanguage(); // Get current language context
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       role: 'model',
-      text: "Namaste! I am your Krushi Mitra. \n\n**Option 1:** Type or Speak your query.\n**Option 2:** Click the 'Scan Crop' button to detect diseases using your camera.",
+      text: "Namaste! I am your Krushi Mitra (Agricultural Friend). \n\nI can help you with:\n1. Crop diseases & Pests\n2. Fertilizers & Medicines\n3. Farming techniques\n\n**Note:** I only answer agriculture-related questions.",
       timestamp: new Date()
     }
   ]);
@@ -69,13 +84,17 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
         systemInstruction: `You are an expert agricultural advisor for "Kastkar Krushi Seva Kendra" located in Keliweli, Maharashtra.
         
         YOUR ROLE:
-        1. Identify crop diseases and pests.
+        1. Identify crop diseases, pests, and nutrient deficiencies.
         2. EXPLAIN symptoms clearly.
-        3. DIAGNOSE based on descriptions.
+        3. Recommend farming solutions.
         4. Respond in the language the user asks in (Marathi or English).
         
-        IMPORTANT:
-        - Do NOT recommend generic chemical names or specific brands unless they are strictly common knowledge (like Neem Oil).
+        STRICT RESTRICTION (CRITICAL):
+        - You must ONLY answer questions related to agriculture, farming, crops, insects, fertilizers, weather effects on crops, and soil health.
+        - If a user asks about anything else (e.g., politics, movies, general news, homework, personal advice, coding, etc.), politely refuse and say: "I am Krushi Mitra. I can only provide information about crops and insects." (In Marathi: "मी कृषी मित्र आहे. मी फक्त पिके आणि कीटकांबद्दल माहिती देऊ शकतो.")
+        
+        MEDICINE RECOMMENDATIONS:
+        - Do NOT recommend generic chemical names unless they are strictly common knowledge (like Neem Oil).
         - Refer users to the shop for "Specific Medicines".
         `,
       },
@@ -159,6 +178,8 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
 
   // --- VOICE INPUT HANDLER ---
   const toggleListening = () => {
+    if (!isMicEnabled) return; // Guard clause
+
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
@@ -203,6 +224,8 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
   // --- CAMERA & ANALYSIS LOGIC ---
 
   const startCamera = async () => {
+    if (!isCamEnabled) return; // Guard clause
+
     setScanStep(1);
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -257,9 +280,14 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
           
           const prompt = `
             Analyze this plant/crop image.
+            
+            STRICT REQUIREMENT: 
+            Is this an image of a plant, crop, fruit, or insect?
+            If NO: Return JSON with "diseaseName": "Not a Crop/Insect" and "explanation": "I can only analyze agricultural images (crops, pests, plants).".
+            If YES:
             1. Identify the specific disease, pest, or deficiency.
             2. List exactly 3 distinctive symptoms observed in the image.
-            3. From the provided 'Available Products' list, select the product IDs that would best treat this condition. If none match perfectly, select the closest general purpose pesticide/fertilizer.
+            3. From the provided 'Available Products' list, select the product IDs that would best treat this condition.
             
             Available Products: ${JSON.stringify(availableProducts)}
             
@@ -468,28 +496,50 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
 
       {/* Admin Control Bar (Owner Only) */}
       {user && (
-          <div className="bg-slate-800 text-white p-3 flex justify-between items-center z-20">
+          <div className="bg-slate-800 text-white p-3 flex flex-wrap justify-between items-center z-20 gap-3">
               <span className="font-bold flex items-center gap-2 text-sm">
                   <ShieldCheck size={16} className="text-yellow-400" /> 
                   Owner Control
               </span>
-              <button
-                  onClick={() => {
-                      if (isEnabled) {
-                          if (window.confirm('Are you sure you want to disable Krushi Mitra AI? Farmers will not be able to use this feature.')) {
+              
+              <div className="flex items-center gap-2">
+                  {/* Mic Toggle */}
+                  <button 
+                      onClick={onToggleMic}
+                      className={`p-1.5 rounded-lg transition-colors ${isMicEnabled ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}
+                      title={isMicEnabled ? "Disable Microphone for Users" : "Enable Microphone for Users"}
+                  >
+                      {isMicEnabled ? <Mic size={14} /> : <MicOff size={14} />}
+                  </button>
+
+                  {/* Camera Toggle */}
+                  <button 
+                      onClick={onToggleCam}
+                      className={`p-1.5 rounded-lg transition-colors ${isCamEnabled ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}
+                      title={isCamEnabled ? "Disable Camera for Users" : "Enable Camera for Users"}
+                  >
+                      {isCamEnabled ? <Camera size={14} /> : <CameraOff size={14} />}
+                  </button>
+
+                  {/* Master AI Toggle */}
+                  <button
+                      onClick={() => {
+                          if (isEnabled) {
+                              if (window.confirm('Are you sure you want to disable Krushi Mitra AI?')) {
+                                  onToggle();
+                              }
+                          } else {
                               onToggle();
                           }
-                      } else {
-                          onToggle();
-                      }
-                  }}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-xs transition-all shadow-lg ${
-                      isEnabled ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
-                  }`}
-              >
-                  <Power size={14} />
-                  {isEnabled ? 'AI Enabled' : 'AI Disabled'}
-              </button>
+                      }}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-bold text-xs transition-all shadow-lg ${
+                          isEnabled ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
+                      }`}
+                  >
+                      <Power size={14} />
+                      {isEnabled ? 'AI On' : 'AI Off'}
+                  </button>
+              </div>
           </div>
       )}
 
@@ -502,7 +552,7 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
           <div>
             <h2 className="font-bold text-lg">Krushi Mitra AI</h2>
             <p className="text-xs text-green-100 opacity-90">
-                {isEnabled ? 'Identifying Diseases & Insects' : 'Service Disabled (Admin Mode)'}
+                {isEnabled ? 'Fakt Crop & Insect Mahiti' : 'Service Disabled (Admin Mode)'}
             </p>
           </div>
         </div>
@@ -569,36 +619,48 @@ export const AIChat: React.FC<AIChatProps> = ({ user, isEnabled, onToggle, produ
       <div className="p-4 bg-white border-t border-slate-100 relative">
         <div className="flex space-x-2 relative">
           
-          {/* CAMERA BUTTON */}
-          <button 
-            onClick={startCamera}
-            disabled={!isEnabled}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-600 p-3 rounded-full transition-colors flex items-center justify-center border border-slate-200"
-            title="Scan Crop Disease"
-          >
-              <Camera size={24} className="text-green-600" />
-          </button>
+          {/* CAMERA BUTTON (Conditionally Rendered) */}
+          {isCamEnabled ? (
+            <button 
+                onClick={startCamera}
+                disabled={!isEnabled}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-600 p-3 rounded-full transition-colors flex items-center justify-center border border-slate-200"
+                title="Scan Crop Disease"
+            >
+                <Camera size={24} className="text-green-600" />
+            </button>
+          ) : (
+            <div className="p-3 bg-slate-50 text-slate-300 rounded-full border border-slate-100 flex items-center justify-center cursor-not-allowed" title="Camera Disabled by Admin">
+                <CameraOff size={24} />
+            </div>
+          )}
 
-          {/* MIC BUTTON */}
-          <button 
-            onClick={toggleListening}
-            disabled={!isEnabled}
-            className={`p-3 rounded-full transition-all flex items-center justify-center border ${
-                isListening 
-                ? 'bg-red-500 text-white border-red-500 animate-pulse' 
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
-            }`}
-            title="Voice Input"
-          >
-              {isListening ? <MicOff size={24} /> : <Mic size={24} className="text-blue-600" />}
-          </button>
+          {/* MIC BUTTON (Conditionally Rendered) */}
+          {isMicEnabled ? (
+              <button 
+                onClick={toggleListening}
+                disabled={!isEnabled}
+                className={`p-3 rounded-full transition-all flex items-center justify-center border ${
+                    isListening 
+                    ? 'bg-red-500 text-white border-red-500 animate-pulse' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+                }`}
+                title="Voice Input"
+            >
+                {isListening ? <MicOff size={24} /> : <Mic size={24} className="text-blue-600" />}
+            </button>
+          ) : (
+            <div className="p-3 bg-slate-50 text-slate-300 rounded-full border border-slate-100 flex items-center justify-center cursor-not-allowed" title="Voice Input Disabled by Admin">
+                 <MicOff size={24} />
+            </div>
+          )}
 
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isListening ? "Listening..." : "Describe symptoms..."}
+            placeholder={isListening ? "Listening..." : "Describe crop symptoms..."}
             className="flex-1 bg-slate-100 border-none rounded-full px-6 py-4 text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all outline-none"
             disabled={isLoading || !isEnabled}
           />

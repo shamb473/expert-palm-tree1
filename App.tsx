@@ -190,6 +190,17 @@ export default function App() {
       return saved !== null ? JSON.parse(saved) : true;
   });
 
+  // New Feature States (Mic and Camera)
+  const [isMicEnabled, setIsMicEnabled] = useState<boolean>(() => {
+      const saved = localStorage.getItem('kastkar_mic_enabled');
+      return saved !== null ? JSON.parse(saved) : true;
+  });
+  
+  const [isCamEnabled, setIsCamEnabled] = useState<boolean>(() => {
+      const saved = localStorage.getItem('kastkar_cam_enabled');
+      return saved !== null ? JSON.parse(saved) : true;
+  });
+
   // Pesticide Price Visibility State
   const [showPesticidePrices, setShowPesticidePrices] = useState<boolean>(() => {
       const saved = localStorage.getItem('kastkar_show_pesticide_prices');
@@ -388,6 +399,23 @@ export default function App() {
       });
   };
 
+  // --- Feature Toggle Handlers (Mic/Cam) ---
+  const handleToggleMic = () => {
+    setIsMicEnabled(prev => {
+        const newState = !prev;
+        localStorage.setItem('kastkar_mic_enabled', JSON.stringify(newState));
+        return newState;
+    });
+  };
+
+  const handleToggleCam = () => {
+    setIsCamEnabled(prev => {
+        const newState = !prev;
+        localStorage.setItem('kastkar_cam_enabled', JSON.stringify(newState));
+        return newState;
+    });
+  };
+
   // --- Pesticide Price Toggle Handler ---
   const handleTogglePesticidePrices = () => {
       setShowPesticidePrices(prev => {
@@ -438,6 +466,10 @@ export default function App() {
                 onToggle={handleToggleAI}
                 products={products}
                 onAddToCart={handleAddToCart}
+                isMicEnabled={isMicEnabled}
+                isCamEnabled={isCamEnabled}
+                onToggleMic={handleToggleMic}
+                onToggleCam={handleToggleCam}
             />
         );
       case AppView.SCHEMES:

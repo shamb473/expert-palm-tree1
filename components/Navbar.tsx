@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppView, User } from '../types';
-import { Sprout, ShoppingBag, MessageSquare, Phone, Home, LogIn, LogOut, User as UserIcon, BookOpen, ClipboardList, Languages, Users, Menu, X, FlaskConical, Heart, ArrowLeft, Grid } from 'lucide-react';
+import { Sprout, ShoppingBag, MessageSquare, Home, LogIn, LogOut, Users, Grid, Languages, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface NavbarProps {
@@ -19,16 +19,15 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView, user,
     { view: AppView.HOME, label: t.nav.home, icon: <Home size={24} /> },
     { view: AppView.PRODUCTS, label: t.nav.products, icon: <ShoppingBag size={24} /> },
     { view: AppView.ADVISOR, label: 'AI Mitra', icon: <MessageSquare size={24} /> },
-    { view: AppView.ADVISORY, label: t.nav.advisory, icon: <ClipboardList size={24} /> },
-    { view: AppView.SCHEMES, label: t.nav.schemes, icon: <BookOpen size={24} /> },
+    { view: AppView.ADVISORY, label: t.nav.advisory, icon: <Grid size={24} /> }, 
+    { view: AppView.SCHEMES, label: t.nav.schemes, icon: <Sprout size={24} /> }, 
   ];
 
-  // Mobile Bottom Nav Items (Replaced Schemes with Menu)
+  // Mobile Bottom Nav Items
   const mobileNavItems = [
     { view: AppView.HOME, label: 'Home', icon: <Home size={24} /> },
     { view: AppView.PRODUCTS, label: 'Shop', icon: <ShoppingBag size={24} /> },
     { view: AppView.ADVISOR, label: 'AI', icon: <MessageSquare size={24} /> },
-    { view: AppView.ADVISORY, label: 'Crop', icon: <ClipboardList size={24} /> },
     { view: AppView.MENU, label: 'Menu', icon: <Grid size={24} /> },
   ];
 
@@ -81,6 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView, user,
                       : 'text-green-100 hover:bg-[#1B5E20] hover:text-white'
                   }`}
                 >
+                  {/* FIX: Cast to ReactElement<any> to allow size prop */}
                   {React.cloneElement(item.icon as React.ReactElement<any>, { size: 18 })}
                   <span>{item.label}</span>
                 </button>
@@ -140,13 +140,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView, user,
               <button
                 key={item.label}
                 onClick={() => onChangeView(item.view)}
-                className="flex-1 flex flex-col items-center justify-center h-full relative"
+                className="flex-1 flex flex-col items-center justify-center h-full relative group"
               >
-                <div className={`transition-all duration-300 ${
+                <div className={`transition-all duration-300 transform ${
                   isActive 
                   ? 'text-[#2E7D32] -translate-y-1' 
-                  : 'text-slate-400'
+                  : 'text-slate-400 group-active:scale-90'
                 }`}>
+                  {/* FIX: Cast to ReactElement<any> to allow size and other props */}
                   {React.cloneElement(item.icon as React.ReactElement<any>, { 
                     size: 24, 
                     strokeWidth: isActive ? 2.5 : 2,
@@ -154,7 +155,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView, user,
                   })}
                 </div>
                 {isActive && (
-                    <span className="absolute bottom-1 w-1 h-1 bg-[#2E7D32] rounded-full"></span>
+                    <span className="absolute bottom-1.5 w-1 h-1 bg-[#2E7D32] rounded-full"></span>
                 )}
               </button>
             );
@@ -165,4 +166,3 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView, user,
     </>
   );
 };
-    
