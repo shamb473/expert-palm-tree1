@@ -3,7 +3,7 @@ import React from 'react';
 import { AppView, User } from '../types';
 import { 
   Home, ShoppingBag, MessageSquare, ClipboardList, BookOpen, 
-  Phone, Users, LogIn, LogOut, ShieldCheck, Grid, Calculator 
+  Phone, Users, LogIn, LogOut, ShieldCheck, Grid, Calculator, Info 
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -58,6 +58,13 @@ export const Menu: React.FC<MenuProps> = ({ onNavigate, user, onLogout }) => {
       icon: <BookOpen size={32} />, 
       gradient: 'from-indigo-400 to-indigo-600',
       shadow: 'shadow-indigo-200'
+    },
+    { 
+      title: 'About Us\nआमच्याबद्दल', 
+      view: AppView.ABOUT, 
+      icon: <Info size={32} />, 
+      gradient: 'from-cyan-500 to-cyan-700',
+      shadow: 'shadow-cyan-200'
     },
     { 
       title: 'Contact\nसंपर्क', 

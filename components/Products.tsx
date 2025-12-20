@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Product, User } from '../types';
-import { ShoppingCart, Filter, ArrowUpDown, Bell, X, Check, Search, Share2, AlertCircle, Plus, Trash2, Image as ImageIcon, Upload, Factory, Clock, ScanQrCode, Camera, Sparkles, Brain, Loader2, MessageCircle, Eye, EyeOff, Star } from 'lucide-react';
+import { ShoppingCart, Filter, ArrowUpDown, Bell, X, Check, Search, Share2, AlertCircle, Plus, Trash2, Image as ImageIcon, Upload, Factory, Clock, ScanQrCode, Camera, Sparkles, Brain, Loader2, MessageCircle, Eye, EyeOff, Star, Edit } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 interface ProductsProps {
@@ -63,6 +63,9 @@ export const Products: React.FC<ProductsProps> = ({
     quantity: 10,
     images: []
   });
+
+  // Admin / Edit Product State
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   // Inline Stock Edit State
   const [editStockId, setEditStockId] = useState<number | null>(null);
@@ -296,7 +299,7 @@ export const Products: React.FC<ProductsProps> = ({
     setLightboxState(prev => ({ ...prev, imageIndex: (prev.imageIndex - 1 + images.length) % images.length }));
   };
 
-  // --- Image Upload Handlers ---
+  // --- Image Upload Handlers (Add Mode) ---
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -308,27 +311,16 @@ export const Products: React.FC<ProductsProps> = ({
     }
   };
 
-  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setNewProduct(prev => ({ 
-                ...prev, 
-                images: [...(prev.images || []), reader.result as string] 
-            }));
-        };
-        reader.readAsDataURL(file as Blob);
-      });
+  // --- Image Upload Handlers (Edit Mode) ---
+  const handleEditImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingProduct) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditingProduct(prev => prev ? ({ ...prev, image: reader.result as string }) : null);
+      };
+      reader.readAsDataURL(file);
     }
-  };
-
-  const removeGalleryImage = (index: number) => {
-    setNewProduct(prev => ({
-        ...prev,
-        images: (prev.images || []).filter((_, i) => i !== index)
-    }));
   };
 
   // --- Add Product Handler ---
@@ -362,6 +354,32 @@ export const Products: React.FC<ProductsProps> = ({
     setTimeout(() => setNotification(null), 3000);
     setIsAddModalOpen(false);
     setNewProduct({ name: '', category: 'Seeds', price: 0, description: '', image: '', inStock: true, company: '', quantity: 10, images: [] });
+  };
+
+  // --- Edit Product Handler ---
+  const handleEditProductSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    
+    if (onUpdateProduct) {
+        // Ensure inStock is synced with quantity
+        const quantity = editingProduct.quantity !== undefined ? Number(editingProduct.quantity) : 0;
+        const updated = {
+            ...editingProduct,
+            quantity: quantity,
+            inStock: quantity > 0
+        };
+        onUpdateProduct(updated);
+        setNotification({ message: 'Product updated successfully!', type: 'success' });
+    }
+    
+    setTimeout(() => setNotification(null), 3000);
+    setEditingProduct(null);
+  };
+
+  const openEditModal = (e: React.MouseEvent, product: Product) => {
+      e.stopPropagation();
+      setEditingProduct({ ...product });
   };
 
   // --- Inline Stock Editing ---
@@ -771,18 +789,27 @@ export const Products: React.FC<ProductsProps> = ({
                 )}
                 
                 {user && (
-                    <button 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if(window.confirm(`Are you sure you want to delete ${product.name}?`)) {
-                                onDeleteProduct(product.id);
-                            }
-                        }}
-                        className="absolute bottom-2 left-2 p-1.5 bg-red-100 text-red-600 rounded-full shadow hover:bg-red-200 transition-colors z-20"
-                        title="Delete Product"
-                    >
-                        <Trash2 size={14} />
-                    </button>
+                    <>
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if(window.confirm(`Are you sure you want to delete ${product.name}?`)) {
+                                    onDeleteProduct(product.id);
+                                }
+                            }}
+                            className="absolute bottom-2 left-2 p-1.5 bg-red-100 text-red-600 rounded-full shadow hover:bg-red-200 transition-colors z-20"
+                            title="Delete Product"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                        <button 
+                            onClick={(e) => openEditModal(e, product)}
+                            className="absolute bottom-2 right-2 p-1.5 bg-blue-100 text-blue-600 rounded-full shadow hover:bg-blue-200 transition-colors z-20"
+                            title="Edit Product"
+                        >
+                            <Edit size={14} />
+                        </button>
+                    </>
                 )}
               </div>
 
@@ -1089,22 +1116,238 @@ export const Products: React.FC<ProductsProps> = ({
           </div>
       )}
       
-      {/* Existing Add Product Modal... */}
+      {/* Add Product Modal */}
       {isAddModalOpen && user && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold text-slate-800">Add Product</h3>
-                    <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto border border-slate-100">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Add New Product</h3>
+                        <p className="text-xs text-slate-500">Enter product details below</p>
+                    </div>
+                    <button onClick={() => setIsAddModalOpen(false)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
                         <X size={20} />
                     </button>
                 </div>
-                <form onSubmit={handleAddProductSubmit} className="space-y-3">
-                    <div><label className="block text-xs font-medium">Name</label><input type="text" className="w-full border p-2 rounded text-sm" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} required /></div>
-                    <div><label className="block text-xs font-medium">Price</label><input type="number" className="w-full border p-2 rounded text-sm" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: parseFloat(e.target.value)})} required /></div>
-                    <div><label className="block text-xs font-medium">Category</label><select className="w-full border p-2 rounded text-sm" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}><option>Seeds</option><option>Fertilizers</option><option>Pesticides</option><option>Equipment</option><option>Other</option></select></div>
-                    {/* ... other fields simplified ... */}
-                     <button type="submit" className="w-full bg-green-700 text-white py-2.5 rounded-lg font-bold text-sm">Add Product</button>
+                
+                <form onSubmit={handleAddProductSubmit} className="space-y-4">
+                    {/* Image Upload Section */}
+                    <div className="flex flex-col items-center justify-center mb-4">
+                        <div className="relative w-32 h-32 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden mb-3 group hover:border-green-500 transition-colors">
+                            {newProduct.image ? (
+                                <img src={newProduct.image} alt="Preview" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="text-center p-2">
+                                    <ImageIcon className="mx-auto text-slate-400 mb-1" size={24} />
+                                    <span className="text-[10px] text-slate-400">No Image</span>
+                                </div>
+                            )}
+                        </div>
+                        <label className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-colors shadow-sm border border-slate-200">
+                            <Upload size={14} />
+                            Upload Photo
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={handleImageUpload} 
+                            />
+                        </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-700 ml-1">Product Name</label>
+                            <input 
+                                type="text" 
+                                className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-green-500 text-sm" 
+                                placeholder="e.g. Bt Cotton Seeds"
+                                value={newProduct.name} 
+                                onChange={e => setNewProduct({...newProduct, name: e.target.value})} 
+                                required 
+                            />
+                        </div>
+                        <div className="space-y-1">
+                             <label className="text-xs font-bold text-slate-700 ml-1">Price (₹)</label>
+                            <input 
+                                type="number" 
+                                className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-green-500 text-sm" 
+                                placeholder="0.00"
+                                value={newProduct.price} 
+                                onChange={e => setNewProduct({...newProduct, price: parseFloat(e.target.value)})} 
+                                required 
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-700 ml-1">Category</label>
+                            <select 
+                                className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-green-500 text-sm appearance-none" 
+                                value={newProduct.category} 
+                                onChange={e => setNewProduct({...newProduct, category: e.target.value})}
+                            >
+                                <option>Seeds</option>
+                                <option>Fertilizers</option>
+                                <option>Pesticides</option>
+                                <option>Equipment</option>
+                                <option>Supplements</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                             <label className="text-xs font-bold text-slate-700 ml-1">Company / Brand</label>
+                            <input 
+                                type="text" 
+                                className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-green-500 text-sm" 
+                                placeholder="e.g. Ankur, Bayer"
+                                value={newProduct.company} 
+                                onChange={e => setNewProduct({...newProduct, company: e.target.value})} 
+                            />
+                        </div>
+                    </div>
+
+                     <div className="space-y-1">
+                         <label className="text-xs font-bold text-slate-700 ml-1">Description</label>
+                         <textarea 
+                             className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-green-500 text-sm h-24 resize-none" 
+                             placeholder="Enter product details..."
+                             value={newProduct.description} 
+                             onChange={e => setNewProduct({...newProduct, description: e.target.value})} 
+                         />
+                     </div>
+                    
+                     <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-700 ml-1">Initial Stock</label>
+                        <input 
+                            type="number" 
+                            className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-green-500 text-sm" 
+                            placeholder="e.g. 50"
+                            value={newProduct.quantity} 
+                            onChange={e => setNewProduct({...newProduct, quantity: parseInt(e.target.value)})} 
+                        />
+                     </div>
+
+                     <button type="submit" className="w-full bg-[#2E7D32] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-green-200 hover:bg-green-800 transition-all mt-2">
+                        Add Product
+                     </button>
+                </form>
+            </div>
+        </div>
+      )}
+
+      {/* Edit Product Modal */}
+      {editingProduct && user && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto border border-slate-100">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">Edit Product</h3>
+                        <p className="text-xs text-slate-500">Update product details below</p>
+                    </div>
+                    <button onClick={() => setEditingProduct(null)} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+                
+                <form onSubmit={handleEditProductSubmit} className="space-y-4">
+                    {/* Image Upload Section */}
+                    <div className="flex flex-col items-center justify-center mb-4">
+                        <div className="relative w-32 h-32 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden mb-3 group hover:border-blue-500 transition-colors">
+                            {editingProduct.image ? (
+                                <img src={editingProduct.image} alt="Preview" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="text-center p-2">
+                                    <ImageIcon className="mx-auto text-slate-400 mb-1" size={24} />
+                                    <span className="text-[10px] text-slate-400">No Image</span>
+                                </div>
+                            )}
+                        </div>
+                        <label className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-colors shadow-sm border border-blue-200">
+                            <Upload size={14} />
+                            Change Photo
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={handleEditImageUpload} 
+                            />
+                        </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-700 ml-1">Product Name</label>
+                            <input 
+                                type="text" 
+                                className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 text-sm" 
+                                value={editingProduct.name} 
+                                onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} 
+                                required 
+                            />
+                        </div>
+                        <div className="space-y-1">
+                             <label className="text-xs font-bold text-slate-700 ml-1">Price (₹)</label>
+                            <input 
+                                type="number" 
+                                className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 text-sm" 
+                                value={editingProduct.price} 
+                                onChange={e => setEditingProduct({...editingProduct, price: parseFloat(e.target.value)})} 
+                                required 
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-700 ml-1">Category</label>
+                            <select 
+                                className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 text-sm appearance-none" 
+                                value={editingProduct.category} 
+                                onChange={e => setEditingProduct({...editingProduct, category: e.target.value})}
+                            >
+                                <option>Seeds</option>
+                                <option>Fertilizers</option>
+                                <option>Pesticides</option>
+                                <option>Equipment</option>
+                                <option>Supplements</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                             <label className="text-xs font-bold text-slate-700 ml-1">Company / Brand</label>
+                            <input 
+                                type="text" 
+                                className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 text-sm" 
+                                value={editingProduct.company || ''} 
+                                onChange={e => setEditingProduct({...editingProduct, company: e.target.value})} 
+                            />
+                        </div>
+                    </div>
+
+                     <div className="space-y-1">
+                         <label className="text-xs font-bold text-slate-700 ml-1">Description</label>
+                         <textarea 
+                             className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 text-sm h-24 resize-none" 
+                             value={editingProduct.description} 
+                             onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} 
+                         />
+                     </div>
+                    
+                     <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-700 ml-1">Current Stock</label>
+                        <input 
+                            type="number" 
+                            className="w-full border border-slate-200 p-3 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 text-sm" 
+                            value={editingProduct.quantity} 
+                            onChange={e => setEditingProduct({...editingProduct, quantity: parseInt(e.target.value)})} 
+                        />
+                     </div>
+
+                     <button type="submit" className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all mt-2">
+                        Update Product
+                     </button>
                 </form>
             </div>
         </div>

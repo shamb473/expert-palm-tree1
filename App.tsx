@@ -12,6 +12,7 @@ import { VisitorEntry } from './components/VisitorEntry';
 import { VisitorList } from './components/VisitorList';
 import { Menu } from './components/Menu';
 import { Calculator } from './components/Calculator';
+import { About } from './components/About';
 import { AppView, User, Product, MarketRate, FarmerProfile, Visitor, DailyWeather } from './types';
 import { MessageCircle, CheckCircle } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
@@ -162,7 +163,7 @@ const INITIAL_FARMERS: FarmerProfile[] = [
 ];
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<AppView>(AppView.HOME);
+  const [currentView, setCurrentView] = useState<AppView>(AppView.MENU);
   const [user, setUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('kastkar_user');
     return savedUser ? JSON.parse(savedUser) : null;
@@ -332,13 +333,13 @@ export default function App() {
     setUser(userData);
     localStorage.setItem('kastkar_user', JSON.stringify(userData));
     setShowVisitorPopup(false);
-    setCurrentView(AppView.HOME);
+    setCurrentView(AppView.MENU);
   };
 
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('kastkar_user');
-    setCurrentView(AppView.HOME);
+    setCurrentView(AppView.MENU);
   };
 
   // --- Visitor Handler ---
@@ -484,23 +485,10 @@ export default function App() {
         return <Menu onNavigate={setCurrentView} user={user} onLogout={handleLogout} />;
       case AppView.CALCULATOR:
         return <Calculator />;
+      case AppView.ABOUT:
+        return <About user={user} />;
       default:
-        return (
-            <Hero 
-                onNavigate={setCurrentView} 
-                user={user}
-                marketRates={marketRates}
-                onAddMarketRate={handleAddMarketRate}
-                onDeleteMarketRate={handleDeleteMarketRate}
-                farmersList={farmersList}
-                onAddFarmer={handleAddFarmer}
-                onUpdateFarmer={handleUpdateFarmer}
-                onDeleteFarmer={handleDeleteFarmer}
-                weatherData={weatherData}
-                weatherLocation={weatherLocation}
-                onWeatherLocationChange={setWeatherLocation}
-            />
-        );
+        return <Menu onNavigate={setCurrentView} user={user} onLogout={handleLogout} />;
     }
   };
 

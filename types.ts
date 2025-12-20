@@ -37,7 +37,8 @@ export enum AppView {
   LOGIN = 'LOGIN',
   VISITORS = 'VISITORS',
   MENU = 'MENU',
-  CALCULATOR = 'CALCULATOR'
+  CALCULATOR = 'CALCULATOR',
+  ABOUT = 'ABOUT'
 }
 
 export interface MarketRate {

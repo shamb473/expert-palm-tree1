@@ -42,7 +42,7 @@ export const AIChat: React.FC<AIChatProps> = ({
     {
       id: 'welcome',
       role: 'model',
-      text: "Namaste! I am your Krushi Mitra (Agricultural Friend). \n\nI can help you with:\n1. Crop diseases & Pests\n2. Fertilizers & Medicines\n3. Farming techniques\n\n**Note:** I only answer agriculture-related questions.",
+      text: "Namaste! I am your Krushi Mitra (Agricultural Friend). \n\nI can help you with:\n1. Crop diseases & Pests\n2. Fertilizers & Medicines\n3. Farming techniques\n\n**Note:** I ONLY answer questions about Crops (Pika) and Insects (Keetk).",
       timestamp: new Date()
     }
   ]);

@@ -3,14 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kastkar Krushi Seva Kendra</title>
+    <title>Kastkar Krushi Seva Kendra | Keliweli, Akola</title>
+    
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="Kastkar Krushi Seva Kendra | Helping Farmers Since 2012" />
+    <meta name="description" content="Authorized dealer for seeds, fertilizers, and pesticides in Keliweli. Get AI-powered crop advice and real-time market rates." />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Kastkar Krushi Seva Kendra - Keliweli" />
+    <meta property="og:description" content="Your trusted partner in agriculture. Premium inputs and expert guidance for all farmers." />
+    <meta property="og:image" content="https://picsum.photos/1200/630?random=10" />
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
       body {
         font-family: 'Inter', sans-serif;
       }
-      /* Custom scrollbar for chat */
       .scrollbar-hide::-webkit-scrollbar {
           display: none;
       }
@@ -19,21 +29,27 @@
           scrollbar-width: none;
       }
     </style>
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "recharts": "https://aistudiocdn.com/recharts@^3.5.1",
-    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0"
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.473.0",
+    "@google/genai": "https://esm.sh/@google/genai@0.2.1",
+    "recharts": "https://esm.sh/recharts@2.15.0",
+    "react-markdown": "https://esm.sh/react-markdown@9.0.1",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>
-</head>
+  </head>
   <body class="bg-slate-50 text-slate-900 antialiased">
     <div id="root"></div>
+    <!-- Link the entry point -->
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

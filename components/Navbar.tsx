@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppView, User } from '../types';
-import { Sprout, ShoppingBag, MessageSquare, Home, LogIn, LogOut, Users, Grid, Languages, ArrowLeft } from 'lucide-react';
+import { Sprout, ShoppingBag, MessageSquare, Home, LogIn, LogOut, Users, Grid, Languages, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface NavbarProps {
@@ -109,13 +109,18 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView, user,
                   >
                     <Users size={20} />
                   </button>
-                  <button 
-                    onClick={onLogout}
-                    className="p-1.5 rounded-full hover:bg-red-900/50 text-red-200 hover:text-red-100 transition-colors"
-                    title="Logout"
-                  >
-                    <LogOut size={20} />
-                  </button>
+                  <div className="flex items-center border border-white/20 rounded-full pl-1 pr-1 py-0.5 bg-[#1B5E20]">
+                      <div className="p-1" title="Owner Access">
+                          <ShieldCheck size={14} className="text-[#FBC02D]" />
+                      </div>
+                      <button 
+                        onClick={onLogout}
+                        className="p-1 rounded-full hover:bg-red-900/50 text-red-200 hover:text-red-100 transition-colors"
+                        title="Logout"
+                      >
+                        <LogOut size={16} />
+                      </button>
+                  </div>
                 </div>
               ) : (
                 <button

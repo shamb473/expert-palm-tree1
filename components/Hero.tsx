@@ -230,6 +230,7 @@ export const Hero: React.FC<HeroProps> = ({
                             <div>
                                 <h2 className="text-5xl font-bold tracking-tighter">{currentWeather.temp}°</h2>
                                 <p className="text-sm font-medium opacity-90">{currentWeather.condition}</p>
+                                <p className="text-xs opacity-75 mt-0.5 font-medium">{currentWeather.date}</p>
                             </div>
                         </div>
                         
@@ -270,9 +271,10 @@ export const Hero: React.FC<HeroProps> = ({
                         <div className="mt-5 border-t border-white/20 pt-4 animate-in fade-in slide-in-from-bottom-2">
                             <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
                                 {weatherData.map((day, idx) => (
-                                    <div key={idx} className="flex flex-col items-center min-w-[60px] bg-white/10 rounded-xl p-2 shrink-0">
+                                    <div key={idx} className="flex flex-col items-center min-w-[70px] bg-white/10 rounded-xl p-2 shrink-0">
                                         <span className="text-[10px] font-bold uppercase opacity-80">{day.day.slice(0,3)}</span>
-                                        <div className="my-2">{getWeatherIcon(day.condition, 20)}</div>
+                                        <span className="text-[9px] opacity-70 mb-1">{day.date}</span>
+                                        <div className="my-1">{getWeatherIcon(day.condition, 20)}</div>
                                         <span className="text-sm font-bold">{day.temp}°</span>
                                     </div>
                                 ))}
